@@ -4,7 +4,7 @@
 # Importar todas las clases necesarias
 from materiales import libro, Libro_texto
 from personas import Estudiante, Profesor
-from bibloteca import SistemaBiblioteca
+from biblioteca import SistemaBiblioteca
 
 def ejecutar_pruebas():    
     bibloteca = SistemaBiblioteca()   #instancia del sistema(materales y usurarios)
