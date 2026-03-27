@@ -1,12 +1,15 @@
 import mysql.connector
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 def conectar():
     return mysql.connector.connect(
-        host="localhost",  #es porque Mysql esta en docker
-        port=3308,    #este es el puerto por defecto de Mysql
-        user="root",  #mi ususario de Mysql
-        password="1234", # esta es mi contraseña de Mysql
-        database="biblioteca" 
-        
+        host=os.getenv("DB_HOST"),
+        port=int(os.getenv("DB_PORT")),
+        user=os.getenv("DB_USER"),
+        password=os.getenv("DB_PASSWORD"),
+        database=os.getenv("DB_NAME")
     )
     
