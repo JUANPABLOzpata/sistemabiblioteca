@@ -66,7 +66,7 @@ class SistemaBiblioteca:
             cursor.close()
             conexion.close()
 
-    def prestar_material(self, id_material, id_usuario):
+    def prestar_material(self, id_material, id_usuario):  
         conexion = conectar()
         cursor = conexion.cursor()
         
