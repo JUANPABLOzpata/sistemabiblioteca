@@ -1,0 +1,1538 @@
+<!DOCTYPE html>
+<html lang="es" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sistema de Gestión de Biblioteca | POO en Python + MySQL</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace']
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background-color: #0f172a;
+      color: #f8fafc;
+    }
+    .code-scroll::-webkit-scrollbar {
+      height: 8px;
+      width: 8px;
+    }
+    .code-scroll::-webkit-scrollbar-track {
+      background: #0f172a;
+    }
+    .code-scroll::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col bg-slate-950 text-slate-100 selection:bg-indigo-500 selection:text-white">
+
+  <!-- Toast Notification Container -->
+  <div id="toastContainer" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none px-4 sm:px-0"></div>
+
+  <!-- Modal Inspector POO -->
+  <div id="objectModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4">
+    <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-lg w-full p-6 shadow-2xl">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
+        <div>
+          <span id="modalBadge" class="text-xs font-mono uppercase px-2.5 py-1 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">Instancia POO</span>
+          <h3 id="modalTitle" class="text-lg font-bold text-white mt-2">Inspección de Objeto en Memoria</h3>
+        </div>
+        <button id="closeModalBtn" type="button" class="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-800 transition">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div id="modalBody" class="space-y-3 text-sm"></div>
+      <div class="mt-6 flex justify-end">
+        <button id="closeModalFooterBtn" type="button" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium text-sm transition">Cerrar inspector</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Top Navbar -->
+  <header class="sticky top-0 z-40 bg-slate-950/90 backdrop-blur-md border-b border-slate-800/80">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-cyan-500 flex items-center justify-center shadow-lg shadow-indigo-500/20 shrink-0">
+          <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+          </svg>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="font-bold text-base sm:text-lg tracking-tight text-white">BiblioPOO</span>
+            <span class="hidden sm:inline-block text-[11px] font-mono px-2 py-0.5 rounded-md bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">Python 3 + MySQL</span>
+          </div>
+          <p class="text-xs text-slate-400 hidden sm:block">Sistema Interactivo de Gestión de Biblioteca</p>
+        </div>
+      </div>
+
+      <!-- Desktop Navigation Tabs -->
+      <nav class="hidden md:flex items-center gap-1 bg-slate-900/90 p-1 rounded-xl border border-slate-800" aria-label="Navegación principal">
+        <button type="button" data-tab="simulador" class="nav-tab-btn px-3.5 py-1.5 rounded-lg text-xs font-semibold transition bg-indigo-600 text-white shadow">
+          1. Simulador Interactivo
+        </button>
+        <button type="button" data-tab="basedatos" class="nav-tab-btn px-3.5 py-1.5 rounded-lg text-xs font-semibold transition text-slate-300 hover:text-white">
+          2. Tablas MySQL en Vivo
+        </button>
+        <button type="button" data-tab="arquitectura" class="nav-tab-btn px-3.5 py-1.5 rounded-lg text-xs font-semibold transition text-slate-300 hover:text-white">
+          3. Arquitectura POO
+        </button>
+        <button type="button" data-tab="codigo" class="nav-tab-btn px-3.5 py-1.5 rounded-lg text-xs font-semibold transition text-slate-300 hover:text-white">
+          4. Código Python
+        </button>
+      </nav>
+
+      <!-- Action Buttons -->
+      <div class="flex items-center gap-2">
+        <button id="runPruebaBtn" type="button" class="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs flex items-center gap-1.5 shadow-lg shadow-emerald-600/20 transition">
+          <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          <span>Correr <code class="font-mono">prueba.py</code></span>
+        </button>
+        <button id="resetDemoBtn" type="button" title="Restaurar datos iniciales" class="p-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 transition">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+        </button>
+        <button id="mobileMenuBtn" type="button" class="md:hidden p-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800" aria-label="Abrir menú">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Mobile Navigation Drawer -->
+    <div id="mobileMenu" class="hidden md:hidden border-t border-slate-800 bg-slate-900/95 px-4 py-3">
+      <div class="grid grid-cols-2 gap-2">
+        <button type="button" data-tab="simulador" class="nav-tab-btn px-3 py-2 rounded-lg text-xs font-semibold text-left bg-indigo-600 text-white">1. Simulador Interactivo</button>
+        <button type="button" data-tab="basedatos" class="nav-tab-btn px-3 py-2 rounded-lg text-xs font-semibold text-left text-slate-300 hover:bg-slate-800">2. Tablas MySQL</button>
+        <button type="button" data-tab="arquitectura" class="nav-tab-btn px-3 py-2 rounded-lg text-xs font-semibold text-left text-slate-300 hover:bg-slate-800">3. Arquitectura POO</button>
+        <button type="button" data-tab="codigo" class="nav-tab-btn px-3 py-2 rounded-lg text-xs font-semibold text-left text-slate-300 hover:bg-slate-800">4. Código Fuente</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero Banner & Live KPI Strip -->
+  <section class="border-b border-slate-800/80 bg-gradient-to-b from-slate-900/70 to-slate-950">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+        <div class="max-w-2xl">
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 text-xs font-medium mb-3">
+            <span class="w-2 h-2 rounded-full bg-indigo-400 animate-pulse"></span>
+            Demostración Funcional para Portafolio de GitHub
+          </div>
+          <h1 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+            Sistema de Biblioteca Orientado a Objetos con MySQL
+          </h1>
+          <p class="mt-2 text-sm text-slate-300 leading-relaxed">
+            Explora cómo interactúan los 4 pilares de POO (<strong class="text-white">Abstracción, Herencia Multinivel, Encapsulamiento y Polimorfismo</strong>) sincronizados en tiempo real con las tablas relacionales <code class="font-mono text-indigo-300">materiales</code>, <code class="font-mono text-indigo-300">usuarios</code> y <code class="font-mono text-indigo-300">prestamos</code>.
+          </p>
+        </div>
+
+        <!-- KPI Cards -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 shrink-0">
+          <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-3.5">
+            <span class="text-xs text-slate-400 block">Materiales</span>
+            <span id="kpiTotalMateriales" class="text-2xl font-extrabold text-white mt-0.5 block">3</span>
+            <span class="text-[11px] text-indigo-400 font-mono">En catálogo</span>
+          </div>
+          <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-3.5">
+            <span class="text-xs text-slate-400 block">Disponibles</span>
+            <span id="kpiDisponibles" class="text-2xl font-extrabold text-emerald-400 mt-0.5 block">3</span>
+            <span class="text-[11px] text-emerald-400/80 font-mono">Listos</span>
+          </div>
+          <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-3.5">
+            <span class="text-xs text-slate-400 block">Préstamos</span>
+            <span id="kpiPrestamos" class="text-2xl font-extrabold text-amber-400 mt-0.5 block">0</span>
+            <span class="text-[11px] text-amber-400/80 font-mono">Activos en BD</span>
+          </div>
+          <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-3.5">
+            <span class="text-xs text-slate-400 block">Usuarios</span>
+            <span id="kpiUsuarios" class="text-2xl font-extrabold text-cyan-400 mt-0.5 block">2</span>
+            <span class="text-[11px] text-cyan-400/80 font-mono">Registrados</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Workspace Container -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+    <!-- ==================== TAB 1: SIMULADOR INTERACTIVO ==================== -->
+    <section id="tab-simulador" class="tab-panel space-y-6">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+        <!-- Left Column (7 cols): Polymorphic Search & Material Catalog -->
+        <div class="lg:col-span-7 space-y-5">
+
+          <!-- Polymorphic Search Card -->
+          <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5">
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+              <div>
+                <h2 class="text-base font-bold text-white flex items-center gap-2">
+                  <span>Búsqueda Polimórfica</span>
+                  <code class="text-xs font-mono px-2 py-0.5 rounded bg-indigo-500/15 text-indigo-300">buscar_material(criterio)</code>
+                </h2>
+                <p class="text-xs text-slate-400 mt-0.5">Detecta automáticamente si ingresas un ID numérico (<code class="font-mono">int</code>) o una palabra del título (<code class="font-mono">str</code>).</p>
+              </div>
+              <span id="searchModeBadge" class="text-xs font-mono px-2.5 py-1 rounded-full bg-slate-800 text-slate-300 border border-slate-700">
+                Modo: Todos los registros
+              </span>
+            </div>
+
+            <div class="flex flex-col sm:flex-row gap-2">
+              <div class="relative flex-1">
+                <input
+                  id="searchInput"
+                  type="text"
+                  placeholder="Escribe un ID (ej. 1001) o título (ej. Objetos, Soledad)..."
+                  class="w-full rounded-xl bg-slate-950 border border-slate-800 focus:border-indigo-500 focus:outline-none px-4 py-2.5 text-sm text-white placeholder-slate-500"
+                />
+              </div>
+              <div class="flex gap-2">
+                <button id="searchBtn" type="button" class="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold transition shrink-0">
+                  Buscar en BD
+                </button>
+                <button id="clearSearchBtn" type="button" class="px-3 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium transition shrink-0">
+                  Ver todos
+                </button>
+              </div>
+            </div>
+
+            <div id="sqlSearchPreview" class="mt-3 px-3 py-2 rounded-xl bg-slate-950/90 border border-slate-800/90 font-mono text-xs text-cyan-300 overflow-x-auto">
+              SELECT * FROM materiales;
+            </div>
+          </div>
+
+          <!-- Catalog List -->
+          <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5">
+            <div class="flex items-center justify-between mb-4">
+              <div>
+                <h2 class="text-base font-bold text-white">Catálogo de Materiales (<code class="font-mono text-indigo-300 text-xs">_catalogo_materiales</code>)</h2>
+                <p class="text-xs text-slate-400">Haz clic en cualquier tarjeta para prestar, devolver o inspeccionar sus atributos encapsulados.</p>
+              </div>
+            </div>
+            <div id="catalogContainer" class="space-y-3"></div>
+          </div>
+
+          <!-- Active Users & Quotas -->
+          <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5">
+            <h2 class="text-base font-bold text-white mb-1">Usuarios y Cupos Polimórficos (<code class="font-mono text-cyan-300 text-xs">get_max_prestamos()</code>)</h2>
+            <p class="text-xs text-slate-400 mb-4">Los estudiantes pueden tener hasta 5 préstamos simultáneos y los profesores hasta 10.</p>
+            <div id="usersContainer" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
+          </div>
+        </div>
+
+        <!-- Right Column (5 cols): Loan Operations, Validation Lab & Live Console -->
+        <div class="lg:col-span-5 space-y-5">
+
+          <!-- Loan / Return Center -->
+          <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5">
+            <h2 class="text-base font-bold text-white mb-1">Centro de Préstamos y Devoluciones</h2>
+            <p class="text-xs text-slate-400 mb-4">Sincroniza los objetos POO en memoria con la tabla <code class="font-mono text-amber-300">prestamos</code> en MySQL.</p>
+
+            <div class="space-y-3">
+              <div>
+                <label for="loanMaterialSelect" class="block text-xs font-medium text-slate-300 mb-1">Seleccionar Material</label>
+                <select id="loanMaterialSelect" class="w-full rounded-xl bg-slate-950 border border-slate-800 px-3.5 py-2.5 text-sm text-white focus:border-indigo-500 focus:outline-none"></select>
+              </div>
+              <div>
+                <label for="loanUserSelect" class="block text-xs font-medium text-slate-300 mb-1">Seleccionar Usuario</label>
+                <select id="loanUserSelect" class="w-full rounded-xl bg-slate-950 border border-slate-800 px-3.5 py-2.5 text-sm text-white focus:border-indigo-500 focus:outline-none"></select>
+              </div>
+              <div class="grid grid-cols-2 gap-2.5 pt-1">
+                <button id="btnPrestar" type="button" class="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs transition flex items-center justify-center gap-1.5">
+                  <span>Prestar Material</span>
+                </button>
+                <button id="btnDevolver" type="button" class="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs transition flex items-center justify-center gap-1.5">
+                  <span>Devolver Material</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Encapsulation & Setter Validation Lab -->
+          <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5">
+            <div class="flex items-center justify-between mb-3">
+              <div>
+                <h2 class="text-base font-bold text-white">Laboratorio de Encapsulamiento y Registro</h2>
+                <p class="text-xs text-slate-400">Prueba los <code class="font-mono text-indigo-300">@property.setter</code> o registra nuevas instancias.</p>
+              </div>
+            </div>
+
+            <!-- Quick Exception Test Buttons from prueba.py -->
+            <div class="mb-4 p-3 rounded-xl bg-slate-950 border border-slate-800/90">
+              <span class="text-[11px] font-mono uppercase tracking-wider text-amber-400 block mb-2">Pruebas Rápidas de Excepciones (ValueError):</span>
+              <div class="flex flex-wrap gap-1.5">
+                <button id="testFutureYearBtn" type="button" class="px-2.5 py-1.5 rounded-lg bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 border border-rose-500/30 text-xs font-medium transition">
+                  Año Futuro (2030)
+                </button>
+                <button id="testZeroPagesBtn" type="button" class="px-2.5 py-1.5 rounded-lg bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 border border-rose-500/30 text-xs font-medium transition">
+                  Páginas = 0
+                </button>
+                <button id="testShortIdBtn" type="button" class="px-2.5 py-1.5 rounded-lg bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 border border-rose-500/30 text-xs font-medium transition">
+                  ID Corto ("123")
+                </button>
+                <button id="testReadOnlyLoanBtn" type="button" class="px-2.5 py-1.5 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 text-xs font-medium transition">
+                  Prestar Revista (No Prestable)
+                </button>
+              </div>
+            </div>
+
+            <!-- Sub-tabs for Creating Material vs User -->
+            <div class="flex gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800 mb-3">
+              <button type="button" data-formtab="material" class="form-tab-btn flex-1 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-white transition">
+                + Nuevo Material
+              </button>
+              <button type="button" data-formtab="usuario" class="form-tab-btn flex-1 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition">
+                + Nuevo Usuario
+              </button>
+            </div>
+
+            <!-- Form: New Material -->
+            <form id="newMaterialForm" class="space-y-2.5">
+              <div class="grid grid-cols-2 gap-2">
+                <div>
+                  <label for="matTipo" class="block text-[11px] text-slate-400 mb-1">Subclase</label>
+                  <select id="matTipo" class="w-full rounded-lg bg-slate-950 border border-slate-800 px-2.5 py-2 text-xs text-white">
+                    <option value="Libro">Libro</option>
+                    <option value="Libro de Texto">LibroTexto</option>
+                    <option value="Revista Científica">RevistaCientifica</option>
+                  </select>
+                </div>
+                <div>
+                  <label for="matId" class="block text-[11px] text-slate-400 mb-1">Código ID (int)</label>
+                  <input id="matId" type="number" value="1004" required class="w-full rounded-lg bg-slate-950 border border-slate-800 px-2.5 py-2 text-xs text-white" />
+                </div>
+              </div>
+              <div>
+                <label for="matTitulo" class="block text-[11px] text-slate-400 mb-1">Título</label>
+                <input id="matTitulo" type="text" placeholder="Ej. Estructura de Datos en Python" required class="w-full rounded-lg bg-slate-950 border border-slate-800 px-2.5 py-2 text-xs text-white" />
+              </div>
+              <div class="grid grid-cols-2 gap-2">
+                <div>
+                  <label for="matAutor" class="block text-[11px] text-slate-400 mb-1">Autor</label>
+                  <input id="matAutor" type="text" placeholder="Ej. M. Goodrich" value="M. Goodrich" class="w-full rounded-lg bg-slate-950 border border-slate-800 px-2.5 py-2 text-xs text-white" />
+                </div>
+                <div>
+                  <label for="matEditorial" class="block text-[11px] text-slate-400 mb-1">Editorial</label>
+                  <input id="matEditorial" type="text" placeholder="Ej. Wiley" value="Wiley" required class="w-full rounded-lg bg-slate-950 border border-slate-800 px-2.5 py-2 text-xs text-white" />
+                </div>
+              </div>
+              <div class="grid grid-cols-3 gap-2">
+                <div>
+                  <label for="matAnio" class="block text-[11px] text-slate-400 mb-1">Año (≤2026)</label>
+                  <input id="matAnio" type="number" value="2024" required class="w-full rounded-lg bg-slate-950 border border-slate-800 px-2.5 py-2 text-xs text-white" />
+                </div>
+                <div>
+                  <label for="matPaginas" class="block text-[11px] text-slate-400 mb-1">Páginas (&gt;0)</label>
+                  <input id="matPaginas" type="number" value="520" required class="w-full rounded-lg bg-slate-950 border border-slate-800 px-2.5 py-2 text-xs text-white" />
+                </div>
+                <div>
+                  <label for="matIsbn" class="block text-[11px] text-slate-400 mb-1">ISBN / ISSN</label>
+                  <input id="matIsbn" type="text" value="978-8490" required class="w-full rounded-lg bg-slate-950 border border-slate-800 px-2.5 py-2 text-xs text-white" />
+                </div>
+              </div>
+              <div id="cursoFieldWrapper" class="hidden">
+                <label for="matCurso" class="block text-[11px] text-slate-400 mb-1">Curso Asociado (LibroTexto)</label>
+                <input id="matCurso" type="text" value="Algoritmos y Estructuras" class="w-full rounded-lg bg-slate-950 border border-slate-800 px-2.5 py-2 text-xs text-white" />
+              </div>
+              <button type="submit" class="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs transition">
+                Instanciar y Registrar en BD
+              </button>
+            </form>
+
+            <!-- Form: New User -->
+            <form id="newUserForm" class="space-y-2.5 hidden">
+              <div class="grid grid-cols-2 gap-2">
+                <div>
+                  <label for="userTipo" class="block text-[11px] text-slate-400 mb-1">Subclase de Persona</label>
+                  <select id="userTipo" class="w-full rounded-lg bg-slate-950 border border-slate-800 px-2.5 py-2 text-xs text-white">
+                    <option value="estudiante">Estudiante (Máx. 5)</option>
+                    <option value="profesor">Profesor (Máx. 10)</option>
+                  </select>
+                </div>
+                <div>
+                  <label for="userId" class="block text-[11px] text-slate-400 mb-1">ID (10 dígitos exactos)</label>
+                  <input id="userId" type="text" maxlength="10" placeholder="1020304050" value="1020304050" required class="w-full rounded-lg bg-slate-950 border border-slate-800 px-2.5 py-2 text-xs text-white font-mono" />
+                </div>
+              </div>
+              <div>
+                <label for="userNombre" class="block text-[11px] text-slate-400 mb-1">Nombre Completo</label>
+                <input id="userNombre" type="text" placeholder="Ej. Carlos Ramírez" required class="w-full rounded-lg bg-slate-950 border border-slate-800 px-2.5 py-2 text-xs text-white" />
+              </div>
+              <div>
+                <label id="userExtraLabel" for="userExtra" class="block text-[11px] text-slate-400 mb-1">Carrera o Departamento</label>
+                <input id="userExtra" type="text" placeholder="Ej. Ingeniería de Software" value="Ingeniería de Software" required class="w-full rounded-lg bg-slate-950 border border-slate-800 px-2.5 py-2 text-xs text-white" />
+              </div>
+              <button type="submit" class="w-full py-2.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-semibold text-xs transition">
+                Registrar Usuario en BD
+              </button>
+            </form>
+          </div>
+
+          <!-- Terminal Output & SQL Logger -->
+          <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">
+            <div class="bg-slate-950 px-4 py-2.5 border-b border-slate-800 flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span>
+                <span class="w-2.5 h-2.5 rounded-full bg-amber-400"></span>
+                <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                <span class="text-xs font-mono text-slate-300 ml-1">Consola Python &amp; Transacciones SQL</span>
+              </div>
+              <button id="clearConsoleBtn" type="button" class="text-[11px] font-mono text-slate-400 hover:text-white">Limpiar</button>
+            </div>
+            <div id="consoleOutput" class="p-3.5 font-mono text-xs space-y-1.5 h-60 overflow-y-auto code-scroll bg-slate-950/70"></div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== TAB 2: TABLAS MYSQL EN VIVO ==================== -->
+    <section id="tab-basedatos" class="tab-panel hidden space-y-6">
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+          <div>
+            <h2 class="text-lg font-bold text-white">Estado Relacional en Tiempo Real (<code class="font-mono text-indigo-400">biblioteca_db</code>)</h2>
+            <p class="text-xs text-slate-400">Cada acción que realizas en el simulador ejecuta sentencias <code class="font-mono">INSERT</code>, <code class="font-mono">UPDATE</code> o <code class="font-mono">DELETE</code> reflejadas en estas 3 tablas.</p>
+          </div>
+          <span class="text-xs font-mono px-3 py-1.5 rounded-xl bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 self-start">
+            Motor: MySQL 8.0 (InnoDB)
+          </span>
+        </div>
+
+        <!-- Table 1: materiales -->
+        <div class="mb-6">
+          <h3 class="text-sm font-bold text-indigo-300 font-mono mb-2">1. Tabla: materiales (PK: id)</h3>
+          <div class="overflow-x-auto rounded-xl border border-slate-800">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-slate-950 text-slate-300 font-mono uppercase">
+                <tr>
+                  <th class="py-2.5 px-3">id</th>
+                  <th class="py-2.5 px-3">titulo</th>
+                  <th class="py-2.5 px-3">tipo</th>
+                  <th class="py-2.5 px-3">disponible</th>
+                  <th class="py-2.5 px-3">autor</th>
+                  <th class="py-2.5 px-3">editorial</th>
+                  <th class="py-2.5 px-3">año</th>
+                  <th class="py-2.5 px-3">paginas</th>
+                  <th class="py-2.5 px-3">isbn</th>
+                </tr>
+              </thead>
+              <tbody id="sqlTableMateriales" class="divide-y divide-slate-800 bg-slate-900/60 font-mono"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Table 2 & 3 Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div>
+            <h3 class="text-sm font-bold text-cyan-300 font-mono mb-2">2. Tabla: usuarios (PK: identificacion)</h3>
+            <div class="overflow-x-auto rounded-xl border border-slate-800">
+              <table class="w-full text-left text-xs">
+                <thead class="bg-slate-950 text-slate-300 font-mono uppercase">
+                  <tr>
+                    <th class="py-2.5 px-3">identificacion</th>
+                    <th class="py-2.5 px-3">nombre</th>
+                    <th class="py-2.5 px-3">tipo</th>
+                    <th class="py-2.5 px-3">extra</th>
+                  </tr>
+                </thead>
+                <tbody id="sqlTableUsuarios" class="divide-y divide-slate-800 bg-slate-900/60 font-mono"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div>
+            <h3 class="text-sm font-bold text-amber-300 font-mono mb-2">3. Tabla: prestamos (FK: id_material, id_usuario)</h3>
+            <div class="overflow-x-auto rounded-xl border border-slate-800">
+              <table class="w-full text-left text-xs">
+                <thead class="bg-slate-950 text-slate-300 font-mono uppercase">
+                  <tr>
+                    <th class="py-2.5 px-3">id</th>
+                    <th class="py-2.5 px-3">id_material</th>
+                    <th class="py-2.5 px-3">id_usuario</th>
+                    <th class="py-2.5 px-3">fecha</th>
+                  </tr>
+                </thead>
+                <tbody id="sqlTablePrestamos" class="divide-y divide-slate-800 bg-slate-900/60 font-mono"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== TAB 3: ARQUITECTURA POO ==================== -->
+    <section id="tab-arquitectura" class="tab-panel hidden space-y-6">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div class="lg:col-span-7 bg-slate-900 border border-slate-800 rounded-2xl p-5">
+          <h2 class="text-lg font-bold text-white mb-1">Jerarquía de Clases Interactiva (UML)</h2>
+          <p class="text-xs text-slate-400 mb-5">Haz clic en cualquier clase para inspeccionar cómo implementa la herencia, los atributos encapsulados y el polimorfismo.</p>
+
+          <div class="space-y-6">
+            <div>
+              <span class="text-xs font-mono uppercase tracking-wider text-indigo-400 block mb-2">Rama 1: Jerarquía de Materiales (materiales.py)</span>
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                <button type="button" data-classinfo="Material" class="uml-node text-left p-3 rounded-xl bg-slate-950 border border-indigo-500/50 hover:border-indigo-400 transition">
+                  <span class="text-[10px] font-mono text-indigo-400 uppercase block">&lt;&lt;abstract&gt;&gt;</span>
+                  <span class="font-bold text-sm text-white">Material(ABC)</span>
+                  <span class="text-[11px] text-slate-400 block mt-1">_titulo, _codigo_id, __disponible</span>
+                </button>
+                <button type="button" data-classinfo="Publicacion" class="uml-node text-left p-3 rounded-xl bg-slate-950 border border-slate-800 hover:border-indigo-400 transition">
+                  <span class="text-[10px] font-mono text-slate-400 uppercase block">Hereda de Material</span>
+                  <span class="font-bold text-sm text-white">Publicacion</span>
+                  <span class="text-[11px] text-slate-400 block mt-1">_año_publicacion, _editorial</span>
+                </button>
+                <button type="button" data-classinfo="ObraLiteraria" class="uml-node text-left p-3 rounded-xl bg-slate-950 border border-slate-800 hover:border-indigo-400 transition">
+                  <span class="text-[10px] font-mono text-slate-400 uppercase block">Hereda de Publicacion</span>
+                  <span class="font-bold text-sm text-white">ObraLiteraria</span>
+                  <span class="text-[11px] text-slate-400 block mt-1">_autor, es_prestamo_permitido()</span>
+                </button>
+                <button type="button" data-classinfo="Libro" class="uml-node text-left p-3 rounded-xl bg-slate-950 border border-slate-800 hover:border-indigo-400 transition">
+                  <span class="text-[10px] font-mono text-emerald-400 uppercase block">Hereda de ObraLiteraria</span>
+                  <span class="font-bold text-sm text-white">Libro</span>
+                  <span class="text-[11px] text-slate-400 block mt-1">_numero_paginas, _isbn</span>
+                </button>
+                <button type="button" data-classinfo="LibroTexto" class="uml-node text-left p-3 rounded-xl bg-slate-950 border border-slate-800 hover:border-indigo-400 transition">
+                  <span class="text-[10px] font-mono text-emerald-400 uppercase block">Hereda de Libro</span>
+                  <span class="font-bold text-sm text-white">LibroTexto</span>
+                  <span class="text-[11px] text-slate-400 block mt-1">_curso_asociado</span>
+                </button>
+                <button type="button" data-classinfo="RevistaCientifica" class="uml-node text-left p-3 rounded-xl bg-slate-950 border border-slate-800 hover:border-amber-400 transition">
+                  <span class="text-[10px] font-mono text-amber-400 uppercase block">Hereda de Publicacion</span>
+                  <span class="font-bold text-sm text-white">RevistaCientifica</span>
+                  <span class="text-[11px] text-slate-400 block mt-1">Solo consulta (No prestable)</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="pt-2 border-t border-slate-800">
+              <span class="text-xs font-mono uppercase tracking-wider text-cyan-400 block mb-2">Rama 2: Jerarquía de Usuarios (personas.py)</span>
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                <button type="button" data-classinfo="Persona" class="uml-node text-left p-3 rounded-xl bg-slate-950 border border-slate-800 hover:border-cyan-400 transition">
+                  <span class="text-[10px] font-mono text-cyan-400 uppercase block">&lt;&lt;abstract&gt;&gt;</span>
+                  <span class="font-bold text-sm text-white">Persona(ABC)</span>
+                  <span class="text-[11px] text-slate-400 block mt-1">_nombre, _identificacion</span>
+                </button>
+                <button type="button" data-classinfo="Estudiante" class="uml-node text-left p-3 rounded-xl bg-slate-950 border border-slate-800 hover:border-cyan-400 transition">
+                  <span class="text-[10px] font-mono text-cyan-400 uppercase block">Hereda de Persona</span>
+                  <span class="font-bold text-sm text-white">Estudiante</span>
+                  <span class="text-[11px] text-slate-400 block mt-1">_carrera | Máx: 5 préstamos</span>
+                </button>
+                <button type="button" data-classinfo="Profesor" class="uml-node text-left p-3 rounded-xl bg-slate-950 border border-slate-800 hover:border-cyan-400 transition">
+                  <span class="text-[10px] font-mono text-cyan-400 uppercase block">Hereda de Persona</span>
+                  <span class="font-bold text-sm text-white">Profesor</span>
+                  <span class="text-[11px] text-slate-400 block mt-1">_departamento | Máx: 10</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Class Detail Inspector -->
+        <div class="lg:col-span-5 bg-slate-900 border border-slate-800 rounded-2xl p-5 flex flex-col justify-between">
+          <div id="classDetailBox"></div>
+          <div class="mt-6 pt-4 border-t border-slate-800 text-xs text-slate-400">
+            <strong class="text-white block mb-1">¿Qué se corrigió en esta arquitectura?</strong>
+            Se conectaron los constructores (<code class="font-mono text-indigo-300">__init__</code>) directamente a los <code class="font-mono text-indigo-300">@setter</code> para impedir objetos inválidos desde su creación, y se encadenó <code class="font-mono text-indigo-300">super().mostrar_info()</code> en toda la jerarquía.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== TAB 4: CÓDIGO PYTHON ==================== -->
+    <section id="tab-codigo" class="tab-panel hidden space-y-4">
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">
+        <div class="flex flex-wrap items-center justify-between gap-2 px-4 py-3 bg-slate-950 border-b border-slate-800">
+          <div class="flex flex-wrap gap-1.5">
+            <button type="button" data-codefile="biblioteca.py" class="code-tab-btn px-3 py-1.5 rounded-lg text-xs font-mono font-semibold bg-indigo-600 text-white">biblioteca.py</button>
+            <button type="button" data-codefile="materiales.py" class="code-tab-btn px-3 py-1.5 rounded-lg text-xs font-mono font-semibold text-slate-400 hover:text-white">materiales.py</button>
+            <button type="button" data-codefile="personas.py" class="code-tab-btn px-3 py-1.5 rounded-lg text-xs font-mono font-semibold text-slate-400 hover:text-white">personas.py</button>
+            <button type="button" data-codefile="conexion.py" class="code-tab-btn px-3 py-1.5 rounded-lg text-xs font-mono font-semibold text-slate-400 hover:text-white">conexion.py</button>
+            <button type="button" data-codefile="schema.sql" class="code-tab-btn px-3 py-1.5 rounded-lg text-xs font-mono font-semibold text-slate-400 hover:text-white">schema.sql</button>
+          </div>
+          <button id="copyCodeBtn" type="button" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium transition">
+            Copiar archivo
+          </button>
+        </div>
+        <pre class="p-4 text-xs font-mono text-slate-200 overflow-x-auto code-scroll max-h-[520px] leading-relaxed"><code id="codeViewerContent"></code></pre>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="border-t border-slate-800/80 bg-slate-950 py-4 mt-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-400 gap-2">
+      <span>Proyecto Final — Programación Orientada a Objetos en Python + MySQL</span>
+      <span class="font-mono text-slate-400">100% Responsivo • Listo para GitHub Pages</span>
+    </div>
+  </footer>
+
+  <script>
+    const INITIAL_MATERIALS = [
+      {
+        id: 1001,
+        titulo: "Programación Orientada a Objetos",
+        tipo: "Libro de Texto",
+        disponible: true,
+        autor: "J. Pérez",
+        editorial: "JUANPISFI",
+        anio: 2024,
+        paginas: 450,
+        isbn: "978-0123456789",
+        curso: "Programación IV",
+        prestable: true
+      },
+      {
+        id: 1002,
+        titulo: "Cien años de soledad",
+        tipo: "Libro",
+        disponible: true,
+        autor: "G. García Márquez",
+        editorial: "Sudamericana",
+        anio: 1967,
+        paginas: 400,
+        isbn: "978-0000000001",
+        curso: null,
+        prestable: true
+      },
+      {
+        id: 1003,
+        titulo: "IEEE Transactions on AI",
+        tipo: "Revista Científica",
+        disponible: true,
+        autor: "Comité Editorial IEEE",
+        editorial: "IEEE",
+        anio: 2025,
+        paginas: 95,
+        isbn: "ISSN-1234-5678",
+        curso: null,
+        prestable: false
+      }
+    ];
+
+    const INITIAL_USERS = [
+      {
+        identificacion: "1234567890",
+        nombre: "Juan Pérez",
+        tipo: "estudiante",
+        extra: "Sistemas",
+        maxPrestamos: 5
+      },
+      {
+        identificacion: "1122334455",
+        nombre: "Ana Gómez",
+        tipo: "profesor",
+        extra: "Ingeniería",
+        maxPrestamos: 10
+      }
+    ];
+
+    let state = {
+      materiales: [],
+      usuarios: [],
+      prestamos: [],
+      nextPrestamoId: 1,
+      searchQuery: "",
+      activeCodeFile: "biblioteca.py"
+    };
+
+    const CODE_FILES = {
+      "biblioteca.py": `class SistemaBiblioteca:
+    """Gestiona el catálogo de materiales, usuarios y préstamos sincronizando POO y MySQL."""
+
+    def __init__(self):
+        self._catalogo_materiales = {}
+        self._usuarios_registrados = {}
+
+    def prestar_material(self, id_material: int, id_usuario: str) -> bool:
+        material = self._catalogo_materiales.get(int(id_material))
+        usuario = self._usuarios_registrados.get(str(id_usuario))
+
+        if material and not material.es_prestamo_permitido():
+            print(f"Error: '{material.titulo}' es solo de consulta en sala.")
+            return False
+        if material and not material.disponible:
+            print(f"Error: El material '{material.titulo}' ya está prestado.")
+            return False
+        if usuario and not usuario.puede_prestar():
+            print(f"Error: Límite de {usuario.get_max_prestamos()} préstamos alcanzado.")
+            return False
+
+        # Actualiza en MySQL y sincroniza los objetos en memoria
+        material.prestar()
+        usuario.agregar_prestamo(material)
+        self.__notificar_prestamo(usuario, material)
+        return True`,
+      "materiales.py": `class Material(ABC):
+    def __init__(self, titulo: str, codigo_id: int):
+        self._titulo = str(titulo).strip()
+        self._codigo_id = int(codigo_id)
+        self.__disponible = True
+
+    @abstractmethod
+    def es_prestamo_permitido(self) -> bool:
+        pass
+
+    @abstractmethod
+    def get_tipo_material(self) -> str:
+        pass
+
+class Publicacion(Material):
+    def __init__(self, titulo, codigo_id, año_publicacion, editorial):
+        super().__init__(titulo, codigo_id)
+        self.año_publicacion = año_publicacion  # Valida con @setter
+
+    @año_publicacion.setter
+    def año_publicacion(self, año: int):
+        if int(año) > datetime.now().year:
+            raise ValueError("El año de publicación no puede ser un año futuro.")
+        self._año_publicacion = int(año)`,
+      "personas.py": `class Persona(ABC):
+    def __init__(self, nombre: str, identificacion: str):
+        self._nombre = nombre
+        self.identificacion = identificacion  # Valida 10 dígitos en el @setter
+        self.__materiales_prestados = []
+
+    @identificacion.setter
+    def identificacion(self, identificacion: str):
+        if not (isinstance(identificacion, str) and len(identificacion) == 10 and identificacion.isdigit()):
+            raise ValueError("La identificación debe ser una cadena de 10 dígitos numéricos.")
+        self._identificacion = identificacion
+
+    def puede_prestar(self) -> bool:
+        return len(self.__materiales_prestados) < self.get_max_prestamos()`,
+      "conexion.py": `import os
+import mysql.connector
+from dotenv import load_dotenv
+
+load_dotenv()
+
+def conectar():
+    return mysql.connector.connect(
+        host=os.getenv("DB_HOST", "localhost"),
+        port=int(os.getenv("DB_PORT", "3306")),
+        user=os.getenv("DB_USER", "root"),
+        password=os.getenv("DB_PASSWORD", ""),
+        database=os.getenv("DB_NAME", "biblioteca_db")
+    )`,
+      "schema.sql": `CREATE DATABASE IF NOT EXISTS biblioteca_db;
+USE biblioteca_db;
+
+CREATE TABLE IF NOT EXISTS materiales (
+    id INT PRIMARY KEY,
+    titulo VARCHAR(255) NOT NULL,
+    tipo VARCHAR(100) NOT NULL,
+    disponible BOOLEAN NOT NULL DEFAULT TRUE,
+    autor VARCHAR(150),
+    editorial VARCHAR(150),
+    año_publicacion INT,
+    numero_paginas INT,
+    isbn VARCHAR(50)
+);
+
+CREATE TABLE IF NOT EXISTS usuarios (
+    identificacion VARCHAR(10) PRIMARY KEY,
+    nombre VARCHAR(150) NOT NULL,
+    tipo VARCHAR(50) NOT NULL,
+    extra VARCHAR(150)
+);
+
+CREATE TABLE IF NOT EXISTS prestamos (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    id_material INT NOT NULL,
+    id_usuario VARCHAR(10) NOT NULL,
+    fecha DATE NOT NULL
+);`
+    };
+
+    const UML_INFO = {
+      Material: {
+        badge: "Clase Base Abstracta (ABC)",
+        herencia: "ABC → Material",
+        atributos: ["_titulo: str (protegido)", "_codigo_id: int (protegido)", "__disponible: bool (privado)"],
+        metodos: ["es_prestamo_permitido() [Abstracto]", "get_tipo_material() [Abstracto]", "prestar() / devolver()", "__cambiar_el_estado_dispo() [Privado]"],
+        explicacion: "Define la interfaz obligatoria que todo material de la biblioteca debe cumplir y protege el atributo __disponible mediante encapsulamiento estricto."
+      },
+      Publicacion: {
+        badge: "Clase Intermedia",
+        herencia: "Material → Publicacion",
+        atributos: ["_año_publicacion: int", "_editorial: str"],
+        metodos: ["@año_publicacion.setter (valida año <= actual)", "set_anio_publicacion(año)", "mostrar_info() [Sobrescrito]"],
+        explicacion: "Reutiliza el constructor de Material con super().__init__() e incorpora la validación para impedir años futuros."
+      },
+      ObraLiteraria: {
+        badge: "Clase Intermedia",
+        herencia: "Publicacion → ObraLiteraria",
+        atributos: ["_autor: str"],
+        metodos: ["es_prestamo_permitido() -> True", "mostrar_info() [Sobrescrito]"],
+        explicacion: "Implementa el método abstracto es_prestamo_permitido() devolviendo True para todas las obras literarias."
+      },
+      Libro: {
+        badge: "Clase Concreta",
+        herencia: "ObraLiteraria → Libro",
+        atributos: ["_numero_paginas: int", "_isbn: str (solo lectura)"],
+        metodos: ["get_tipo_material() -> 'Libro'", "@numero_paginas.setter (valida > 0)"],
+        explicacion: "Valida que el número de páginas sea estrictamente positivo (> 0) y expone el ISBN como propiedad de solo lectura."
+      },
+      LibroTexto: {
+        badge: "Subclase Especializada",
+        herencia: "Libro → LibroTexto",
+        atributos: ["_curso_asociado: str"],
+        metodos: ["get_tipo_material() -> 'Libro de Texto'", "mostrar_info() [Sobrescrito]"],
+        explicacion: "Quinto nivel de herencia. Sobrescribe get_tipo_material() para identificarse como 'Libro de Texto' y añade la asignatura."
+      },
+      RevistaCientifica: {
+        badge: "Polimorfismo de Consulta",
+        herencia: "Publicacion → RevistaCientifica",
+        atributos: ["_issn: str"],
+        metodos: ["es_prestamo_permitido() -> False", "get_tipo_material() -> 'Revista Científica'"],
+        explicacion: "Demuestra el polimorfismo en prestar(): al devolver False en es_prestamo_permitido(), el sistema rechaza préstamos a domicilio."
+      },
+      Persona: {
+        badge: "Clase Base Abstracta (ABC)",
+        herencia: "ABC → Persona",
+        atributos: ["_nombre: str", "_identificacion: str (10 dígitos)", "__materiales_prestados: list"],
+        metodos: ["get_max_prestamos() [Abstracto]", "@identificacion.setter (valida 10 dígitos)", "puede_prestar() -> bool"],
+        explicacion: "Gestiona la lista privada de préstamos en memoria y exige una identificación numérica de exactamente 10 caracteres."
+      },
+      Estudiante: {
+        badge: "Subclase de Usuario",
+        herencia: "Persona → Estudiante",
+        atributos: ["_carrera: str", "__max_prestamos = 5"],
+        metodos: ["get_tipo_usuario() -> 'estudiante'", "get_max_prestamos() -> 5"],
+        explicacion: "Especializa a Persona para estudiantes universitarios limitando su cupo simultáneo a 5 materiales."
+      },
+      Profesor: {
+        badge: "Subclase de Usuario",
+        herencia: "Persona → Profesor",
+        atributos: ["_departamento: str", "__max_prestamos = 10"],
+        metodos: ["get_tipo_usuario() -> 'profesor'", "get_max_prestamos() -> 10"],
+        explicacion: "Especializa a Persona para docentes universitarios otorgando un cupo ampliado de hasta 10 materiales."
+      }
+    };
+
+    function logConsole(message, type = "info") {
+      const box = document.getElementById("consoleOutput");
+      const line = document.createElement("div");
+      const time = new Date().toLocaleTimeString("es-CO", { hour12: false });
+      const colors = {
+        info: "text-slate-300",
+        sql: "text-cyan-400",
+        success: "text-emerald-400",
+        error: "text-rose-400 font-semibold",
+        internal: "text-amber-300"
+      };
+      line.className = `${colors[type] || "text-slate-300"} leading-relaxed`;
+      line.textContent = `[${time}] ${message}`;
+      box.appendChild(line);
+      box.scrollTop = box.scrollHeight;
+    }
+
+    function showToast(title, message, variant = "success") {
+      const container = document.getElementById("toastContainer");
+      const toast = document.createElement("div");
+      const styles = {
+        success: "bg-slate-900/95 border-emerald-500/50 text-emerald-200",
+        error: "bg-slate-900/95 border-rose-500/60 text-rose-200",
+        warning: "bg-slate-900/95 border-amber-500/60 text-amber-200"
+      };
+      toast.className = `pointer-events-auto border rounded-xl p-3.5 shadow-xl backdrop-blur-md transition-all ${styles[variant] || styles.success}`;
+      toast.innerHTML = `
+        <div class="font-bold text-xs text-white">${title}</div>
+        <div class="text-xs mt-0.5 leading-snug">${message}</div>
+      `;
+      container.appendChild(toast);
+      setTimeout(() => {
+        toast.remove();
+      }, 3600);
+    }
+
+    function resetDemoState() {
+      state.materiales = JSON.parse(JSON.stringify(INITIAL_MATERIALS));
+      state.usuarios = JSON.parse(JSON.stringify(INITIAL_USERS));
+      state.prestamos = [];
+      state.nextPrestamoId = 1;
+      state.searchQuery = "";
+      document.getElementById("searchInput").value = "";
+      document.getElementById("consoleOutput").innerHTML = "";
+      logConsole("SistemaBiblioteca inicializado con éxito.", "info");
+      logConsole("SQL > INSERT INTO materiales (1001, 1002, 1003) & usuarios ('1234567890', '1122334455')", "sql");
+      renderAll();
+    }
+
+    function getUserLoans(identificacion) {
+      return state.prestamos
+        .filter((p) => p.id_usuario === identificacion)
+        .map((p) => state.materiales.find((m) => m.id === p.id_material))
+        .filter(Boolean);
+    }
+
+    function prestarMaterial(idMaterial, idUsuario) {
+      const mat = state.materiales.find((m) => m.id === Number(idMaterial));
+      const user = state.usuarios.find((u) => u.identificacion === String(idUsuario));
+
+      if (!mat) {
+        logConsole(`Error: Material ${idMaterial} no encontrado.`, "error");
+        showToast("Error al prestar", `No existe el material con ID ${idMaterial}.`, "error");
+        return false;
+      }
+      if (!user) {
+        logConsole(`Error: Usuario ${idUsuario} no encontrado.`, "error");
+        showToast("Error al prestar", `No existe el usuario con ID ${idUsuario}.`, "error");
+        return false;
+      }
+      if (!mat.prestable) {
+        logConsole(`${mat.tipo} '${mat.titulo}' es solo de consulta en sala y no se puede prestar.`, "error");
+        showToast("Préstamo Rechazado (Polimorfismo)", `'${mat.titulo}' tiene es_prestamo_permitido() = False.`, "warning");
+        return false;
+      }
+      if (!mat.disponible) {
+        logConsole(`Error: ${mat.tipo} '${mat.titulo}' (ID: ${mat.id}) ya está prestado.`, "error");
+        showToast("Material no disponible", `'${mat.titulo}' ya se encuentra prestado actualmente.`, "error");
+        return false;
+      }
+
+      const prestamosActuales = getUserLoans(user.identificacion);
+      if (prestamosActuales.length >= user.maxPrestamos) {
+        logConsole(`Error: Usuario '${user.nombre}' alcanzó su límite de ${user.maxPrestamos} préstamos.`, "error");
+        showToast("Cupo máximo alcanzado", `${user.nombre} ya tiene ${user.maxPrestamos} préstamos activos.`, "error");
+        return false;
+      }
+
+      mat.disponible = false;
+      const hoy = new Date().toISOString().slice(0, 10);
+      state.prestamos.push({
+        id: state.nextPrestamoId++,
+        id_material: mat.id,
+        id_usuario: user.identificacion,
+        fecha: hoy
+      });
+
+      logConsole(`SQL > UPDATE materiales SET disponible = FALSE WHERE id = ${mat.id};`, "sql");
+      logConsole(`SQL > INSERT INTO prestamos (id_material, id_usuario, fecha) VALUES (${mat.id}, '${user.identificacion}', '${hoy}');`, "sql");
+      logConsole(`${mat.tipo} '${mat.titulo}' ha sido prestado.`, "success");
+      logConsole(`[Notificación Interna]: Préstamo de '${mat.titulo}' (ID ${mat.id}) asignado a ${user.nombre} (${user.identificacion}).`, "internal");
+
+      showToast("Préstamo registrado", `'${mat.titulo}' fue prestado a ${user.nombre}.`, "success");
+      renderAll();
+      return true;
+    }
+
+    function devolverMaterial(idMaterial, idUsuario) {
+      const idx = state.prestamos.findIndex(
+        (p) => p.id_material === Number(idMaterial) && (!idUsuario || p.id_usuario === String(idUsuario))
+      );
+
+      if (idx === -1) {
+        logConsole(`Error: No se encontró préstamo activo del material ${idMaterial} para el usuario seleccionado.`, "error");
+        showToast("Préstamo no encontrado", `El material ${idMaterial} no está prestado a ese usuario.`, "error");
+        return false;
+      }
+
+      const prestamo = state.prestamos[idx];
+      const mat = state.materiales.find((m) => m.id === prestamo.id_material);
+      const user = state.usuarios.find((u) => u.identificacion === prestamo.id_usuario);
+
+      state.prestamos.splice(idx, 1);
+      if (mat) mat.disponible = true;
+
+      logConsole(`SQL > DELETE FROM prestamos WHERE id_material = ${prestamo.id_material} AND id_usuario = '${prestamo.id_usuario}';`, "sql");
+      logConsole(`SQL > UPDATE materiales SET disponible = TRUE WHERE id = ${prestamo.id_material};`, "sql");
+      logConsole(`- ${mat ? mat.tipo : "Material"} '${mat ? mat.titulo : prestamo.id_material}' ha sido devuelto por ${user ? user.nombre : prestamo.id_usuario}.`, "success");
+
+      showToast("Devolución exitosa", `'${mat ? mat.titulo : idMaterial}' está disponible nuevamente.`, "success");
+      renderAll();
+      return true;
+    }
+
+    function renderKPIs() {
+      document.getElementById("kpiTotalMateriales").textContent = state.materiales.length;
+      document.getElementById("kpiDisponibles").textContent = state.materiales.filter((m) => m.disponible).length;
+      document.getElementById("kpiPrestamos").textContent = state.prestamos.length;
+      document.getElementById("kpiUsuarios").textContent = state.usuarios.length;
+    }
+
+    function renderCatalog() {
+      const container = document.getElementById("catalogContainer");
+      const query = state.searchQuery.trim();
+      const badge = document.getElementById("searchModeBadge");
+      const sqlBox = document.getElementById("sqlSearchPreview");
+
+      let filtered = state.materiales;
+      if (query !== "") {
+        if (/^\d+$/.test(query)) {
+          const idNum = Number(query);
+          filtered = state.materiales.filter((m) => m.id === idNum);
+          badge.textContent = `Polimorfismo: Búsqueda por ID (int = ${idNum})`;
+          badge.className = "text-xs font-mono px-2.5 py-1 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30";
+          sqlBox.textContent = `SELECT * FROM materiales WHERE id = ${idNum};`;
+        } else {
+          const lower = query.toLowerCase();
+          filtered = state.materiales.filter((m) => m.titulo.toLowerCase().includes(lower));
+          badge.textContent = `Polimorfismo: Búsqueda por Título (str = '${query}')`;
+          badge.className = "text-xs font-mono px-2.5 py-1 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/30";
+          sqlBox.textContent = `SELECT * FROM materiales WHERE LOWER(titulo) LIKE '%${lower}%';`;
+        }
+      } else {
+        badge.textContent = "Modo: Todos los registros";
+        badge.className = "text-xs font-mono px-2.5 py-1 rounded-full bg-slate-800 text-slate-300 border border-slate-700";
+        sqlBox.textContent = "SELECT * FROM materiales;";
+      }
+
+      if (filtered.length === 0) {
+        container.innerHTML = `
+          <div class="p-6 rounded-xl bg-slate-950 border border-slate-800 text-center text-xs text-slate-400">
+            No se encontraron materiales con el criterio <strong class="text-white">"${query}"</strong>.
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = filtered
+        .map((m) => {
+          const prestamo = state.prestamos.find((p) => p.id_material === m.id);
+          const prestatario = prestamo ? state.usuarios.find((u) => u.identificacion === prestamo.id_usuario) : null;
+
+          let statusBadge = "";
+          if (!m.prestable) {
+            statusBadge = `<span class="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-500/15 text-amber-300 border border-amber-500/30">Solo Consulta</span>`;
+          } else if (m.disponible) {
+            statusBadge = `<span class="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">Disponible</span>`;
+          } else {
+            statusBadge = `<span class="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-rose-500/15 text-rose-300 border border-rose-500/30">Prestado a ${prestatario ? prestatario.nombre : prestamo.id_usuario}</span>`;
+          }
+
+          return `
+            <div class="p-4 rounded-xl bg-slate-950/90 border border-slate-800 hover:border-slate-700 transition flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div class="space-y-1">
+                <div class="flex flex-wrap items-center gap-2">
+                  <span class="font-mono text-xs px-2 py-0.5 rounded bg-slate-800 text-indigo-300">ID: ${m.id}</span>
+                  <span class="text-xs font-medium text-slate-400">${m.tipo}</span>
+                  ${statusBadge}
+                </div>
+                <h3 class="font-bold text-sm text-white">${m.titulo}</h3>
+                <p class="text-xs text-slate-400">
+                  Autor: <span class="text-slate-200">${m.autor}</span> • Editorial: <span class="text-slate-200">${m.editorial} (${m.anio})</span> • ${m.paginas} págs.
+                  ${m.curso ? `• Curso: <span class="text-indigo-300">${m.curso}</span>` : ""}
+                </p>
+              </div>
+              <div class="flex flex-wrap sm:flex-nowrap items-center gap-2 shrink-0">
+                ${
+                  m.disponible
+                    ? `<button type="button" data-quickloan="${m.id}" class="px-3 py-1.5 rounded-lg bg-indigo-600/20 hover:bg-indigo-600 text-indigo-200 hover:text-white border border-indigo-500/30 text-xs font-semibold transition">Prestar</button>`
+                    : `<button type="button" data-quickreturn="${m.id}" class="px-3 py-1.5 rounded-lg bg-emerald-600/20 hover:bg-emerald-600 text-emerald-200 hover:text-white border border-emerald-500/30 text-xs font-semibold transition">Devolver</button>`
+                }
+                <button type="button" data-inspect="${m.id}" class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-mono transition">
+                  POO
+                </button>
+              </div>
+            </div>
+          `;
+        })
+        .join("");
+    }
+
+    function renderUsers() {
+      const container = document.getElementById("usersContainer");
+      container.innerHTML = state.usuarios
+        .map((u) => {
+          const prestados = getUserLoans(u.identificacion);
+          const pct = Math.min(100, Math.round((prestados.length / u.maxPrestamos) * 100));
+          return `
+            <div class="p-3.5 rounded-xl bg-slate-950 border border-slate-800 space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="text-[11px] font-mono uppercase px-2 py-0.5 rounded bg-cyan-500/15 text-cyan-300 border border-cyan-500/30">${u.tipo}</span>
+                <span class="text-xs font-mono text-slate-400">ID: ${u.identificacion}</span>
+              </div>
+              <div>
+                <h3 class="font-bold text-sm text-white">${u.nombre}</h3>
+                <p class="text-xs text-slate-400">${u.tipo === "estudiante" ? "Carrera" : "Departamento"}: <span class="text-slate-200">${u.extra}</span></p>
+              </div>
+              <div>
+                <div class="flex justify-between text-[11px] text-slate-400 mb-1">
+                  <span>materiales_prestados</span>
+                  <span class="font-mono text-white">${prestados.length} / ${u.maxPrestamos}</span>
+                </div>
+                <div class="w-full h-1.5 rounded-full bg-slate-800 overflow-hidden">
+                  <div class="h-full bg-cyan-500 transition-all" style="width: ${pct}%"></div>
+                </div>
+                <p class="text-[11px] font-mono text-slate-400 mt-1.5 truncate">
+                  ${prestados.length > 0 ? prestados.map((m) => m.titulo).join(", ") : "[] (Sin préstamos activos)"}
+                </p>
+              </div>
+            </div>
+          `;
+        })
+        .join("");
+    }
+
+    function renderSelects() {
+      const matSelect = document.getElementById("loanMaterialSelect");
+      const userSelect = document.getElementById("loanUserSelect");
+      const currentMat = matSelect.value;
+      const currentUser = userSelect.value;
+
+      matSelect.innerHTML = state.materiales
+        .map(
+          (m) =>
+            `<option value="${m.id}">[${m.id}] ${m.titulo} (${m.disponible ? (m.prestable ? "Disponible" : "Solo Consulta") : "Prestado"})</option>`
+        )
+        .join("");
+
+      userSelect.innerHTML = state.usuarios
+        .map((u) => {
+          const count = getUserLoans(u.identificacion).length;
+          return `<option value="${u.identificacion}">${u.nombre} (${u.tipo} - ${count}/${u.maxPrestamos})</option>`;
+        })
+        .join("");
+
+      if (currentMat && state.materiales.some((m) => String(m.id) === currentMat)) {
+        matSelect.value = currentMat;
+      }
+      if (currentUser && state.usuarios.some((u) => u.identificacion === currentUser)) {
+        userSelect.value = currentUser;
+      }
+    }
+
+    function renderSQLTables() {
+      const tbodyMat = document.getElementById("sqlTableMateriales");
+      const tbodyUser = document.getElementById("sqlTableUsuarios");
+      const tbodyPres = document.getElementById("sqlTablePrestamos");
+
+      tbodyMat.innerHTML = state.materiales
+        .map(
+          (m) => `
+          <tr class="hover:bg-slate-800/40">
+            <td class="py-2 px-3 text-indigo-300 font-bold">${m.id}</td>
+            <td class="py-2 px-3 text-white">${m.titulo}</td>
+            <td class="py-2 px-3 text-slate-300">${m.tipo}</td>
+            <td class="py-2 px-3">${
+              m.disponible
+                ? '<span class="text-emerald-400">TRUE (1)</span>'
+                : '<span class="text-rose-400">FALSE (0)</span>'
+            }</td>
+            <td class="py-2 px-3 text-slate-300">${m.autor}</td>
+            <td class="py-2 px-3 text-slate-300">${m.editorial}</td>
+            <td class="py-2 px-3 text-slate-300">${m.anio}</td>
+            <td class="py-2 px-3 text-slate-300">${m.paginas}</td>
+            <td class="py-2 px-3 text-slate-400">${m.isbn}</td>
+          </tr>
+        `
+        )
+        .join("");
+
+      tbodyUser.innerHTML = state.usuarios
+        .map(
+          (u) => `
+          <tr class="hover:bg-slate-800/40">
+            <td class="py-2 px-3 text-cyan-300 font-bold">${u.identificacion}</td>
+            <td class="py-2 px-3 text-white">${u.nombre}</td>
+            <td class="py-2 px-3 text-slate-300">${u.tipo}</td>
+            <td class="py-2 px-3 text-slate-300">${u.extra}</td>
+          </tr>
+        `
+        )
+        .join("");
+
+      if (state.prestamos.length === 0) {
+        tbodyPres.innerHTML = `
+          <tr>
+            <td colspan="4" class="py-4 px-3 text-center text-slate-500">
+              Tabla vacía (0 filas en prestamos)
+            </td>
+          </tr>
+        `;
+      } else {
+        tbodyPres.innerHTML = state.prestamos
+          .map(
+            (p) => `
+            <tr class="hover:bg-slate-800/40">
+              <td class="py-2 px-3 text-amber-300 font-bold">${p.id}</td>
+              <td class="py-2 px-3 text-indigo-300">${p.id_material}</td>
+              <td class="py-2 px-3 text-cyan-300">${p.id_usuario}</td>
+              <td class="py-2 px-3 text-slate-300">${p.fecha}</td>
+            </tr>
+          `
+          )
+          .join("");
+      }
+    }
+
+    function renderUMLInspector(className) {
+      const info = UML_INFO[className] || UML_INFO.Material;
+      const box = document.getElementById("classDetailBox");
+      box.innerHTML = `
+        <div>
+          <span class="text-xs font-mono px-2.5 py-1 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">${info.badge}</span>
+          <h3 class="text-xl font-extrabold text-white mt-2">${className}</h3>
+          <p class="text-xs font-mono text-cyan-400 mt-0.5">${info.herencia}</p>
+          <p class="text-xs text-slate-300 mt-3 leading-relaxed">${info.explicacion}</p>
+
+          <div class="mt-4 space-y-3">
+            <div class="p-3 rounded-xl bg-slate-950 border border-slate-800">
+              <span class="text-[11px] font-mono uppercase text-slate-400 block mb-1.5">Atributos Encapsulados</span>
+              <ul class="space-y-1 text-xs font-mono text-emerald-300">
+                ${info.atributos.map((a) => `<li>• ${a}</li>`).join("")}
+              </ul>
+            </div>
+            <div class="p-3 rounded-xl bg-slate-950 border border-slate-800">
+              <span class="text-[11px] font-mono uppercase text-slate-400 block mb-1.5">Métodos y Propiedades (@property)</span>
+              <ul class="space-y-1 text-xs font-mono text-indigo-300">
+                ${info.metodos.map((m) => `<li>• ${m}</li>`).join("")}
+              </ul>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderCodeViewer(fileName) {
+      state.activeCodeFile = fileName;
+      document.getElementById("codeViewerContent").textContent = CODE_FILES[fileName] || "";
+      document.querySelectorAll(".code-tab-btn").forEach((btn) => {
+        if (btn.dataset.codefile === fileName) {
+          btn.className = "code-tab-btn px-3 py-1.5 rounded-lg text-xs font-mono font-semibold bg-indigo-600 text-white";
+        } else {
+          btn.className = "code-tab-btn px-3 py-1.5 rounded-lg text-xs font-mono font-semibold text-slate-400 hover:text-white";
+        }
+      });
+    }
+
+    function openObjectInspector(materialId) {
+      const m = state.materiales.find((item) => item.id === Number(materialId));
+      if (!m) return;
+      document.getElementById("modalBadge").textContent = `Instancia de ${m.tipo}`;
+      document.getElementById("modalTitle").textContent = `${m.titulo} (ID: ${m.id})`;
+      document.getElementById("modalBody").innerHTML = `
+        <div class="p-3 rounded-xl bg-slate-950 border border-slate-800 font-mono text-xs space-y-1">
+          <div class="text-slate-400"># Salida de mostrar_info() sobrescrito:</div>
+          <div class="text-emerald-300">"Título: ${m.titulo} | ID: ${m.id} | Estado: ${m.disponible ? "disponible" : "prestado"} | Editorial: ${m.editorial} (${m.anio}) | Autor: ${m.autor} | Páginas: ${m.paginas}"</div>
+        </div>
+        <div class="grid grid-cols-2 gap-2 font-mono text-xs">
+          <div class="p-2.5 rounded-lg bg-slate-950 border border-slate-800">
+            <span class="text-slate-400 block">_codigo_id</span>
+            <span class="text-white font-bold">${m.id}</span>
+          </div>
+          <div class="p-2.5 rounded-lg bg-slate-950 border border-slate-800">
+            <span class="text-slate-400 block">__disponible</span>
+            <span class="${m.disponible ? "text-emerald-400" : "text-rose-400"} font-bold">${m.disponible ? "True" : "False"}</span>
+          </div>
+          <div class="p-2.5 rounded-lg bg-slate-950 border border-slate-800">
+            <span class="text-slate-400 block">es_prestamo_permitido()</span>
+            <span class="text-indigo-300 font-bold">${m.prestable ? "True" : "False"}</span>
+          </div>
+          <div class="p-2.5 rounded-lg bg-slate-950 border border-slate-800">
+            <span class="text-slate-400 block">get_tipo_material()</span>
+            <span class="text-cyan-300 font-bold">"${m.tipo}"</span>
+          </div>
+        </div>
+      `;
+      const modal = document.getElementById("objectModal");
+      modal.classList.remove("hidden");
+      modal.classList.add("flex");
+    }
+
+    function closeObjectInspector() {
+      const modal = document.getElementById("objectModal");
+      modal.classList.add("hidden");
+      modal.classList.remove("flex");
+    }
+
+    function renderAll() {
+      renderKPIs();
+      renderCatalog();
+      renderUsers();
+      renderSelects();
+      renderSQLTables();
+    }
+
+    function runFullPruebaPy() {
+      resetDemoState();
+      logConsole("=== EJECUTANDO SUITE COMPLETA DE PRUEBA.PY ===", "info");
+      logConsole("1. Demostración de Herencia: LibroTexto(1001), Libro(1002), RevistaCientifica(1003)", "success");
+      logConsole("2. Búsqueda polimórfica por ID (1001) y por Título ('Objetos') verificada.", "info");
+      logConsole("3. Validaciones de encapsulamiento (@setter):", "internal");
+      logConsole("   -> set_anio_publicacion(2030) => ValueError capturado: El año no puede ser futuro.", "error");
+      logConsole("   -> set_num_paginas(0) => ValueError capturado: El número de páginas debe ser > 0.", "error");
+      logConsole("   -> set_identificacion('123') => ValueError capturado: Debe tener 10 dígitos.", "error");
+      logConsole("4. Ejecutando préstamos polimórficos...", "info");
+      prestarMaterial(1002, "1234567890");
+      prestarMaterial(1001, "1122334455");
+      showToast("Suite prueba.py ejecutada", "Se probaron validaciones, búsqueda y préstamos en vivo.", "success");
+    }
+
+    window.addEventListener("DOMContentLoaded", () => {
+      resetDemoState();
+      renderUMLInspector("Material");
+      renderCodeViewer("biblioteca.py");
+
+      document.querySelectorAll(".nav-tab-btn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const target = btn.dataset.tab;
+          document.querySelectorAll(".tab-panel").forEach((panel) => panel.classList.add("hidden"));
+          document.getElementById(`tab-${target}`).classList.remove("hidden");
+
+          document.querySelectorAll(".nav-tab-btn").forEach((b) => {
+            if (b.dataset.tab === target) {
+              b.className = "nav-tab-btn px-3.5 py-1.5 rounded-lg text-xs font-semibold transition bg-indigo-600 text-white shadow";
+            } else {
+              b.className = "nav-tab-btn px-3.5 py-1.5 rounded-lg text-xs font-semibold transition text-slate-300 hover:text-white";
+            }
+          });
+          document.getElementById("mobileMenu").classList.add("hidden");
+        });
+      });
+
+      document.getElementById("mobileMenuBtn").addEventListener("click", () => {
+        document.getElementById("mobileMenu").classList.toggle("hidden");
+      });
+
+      document.getElementById("runPruebaBtn").addEventListener("click", runFullPruebaPy);
+      document.getElementById("resetDemoBtn").addEventListener("click", () => {
+        resetDemoState();
+        showToast("Simulador reiniciado", "Se restauraron los datos originales del proyecto.", "success");
+      });
+
+      const searchInput = document.getElementById("searchInput");
+      searchInput.addEventListener("input", (e) => {
+        state.searchQuery = e.target.value;
+        renderCatalog();
+      });
+      document.getElementById("searchBtn").addEventListener("click", () => {
+        state.searchQuery = searchInput.value;
+        logConsole(`buscar_material('${state.searchQuery || "*"}') ejecutado.`, "info");
+        renderCatalog();
+      });
+      document.getElementById("clearSearchBtn").addEventListener("click", () => {
+        searchInput.value = "";
+        state.searchQuery = "";
+        renderCatalog();
+      });
+
+      document.getElementById("catalogContainer").addEventListener("click", (e) => {
+        const loanBtn = e.target.closest("[data-quickloan]");
+        if (loanBtn) {
+          const matId = Number(loanBtn.dataset.quickloan);
+          const userId = document.getElementById("loanUserSelect").value;
+          prestarMaterial(matId, userId);
+          return;
+        }
+        const returnBtn = e.target.closest("[data-quickreturn]");
+        if (returnBtn) {
+          const matId = Number(returnBtn.dataset.quickreturn);
+          devolverMaterial(matId, null);
+          return;
+        }
+        const inspectBtn = e.target.closest("[data-inspect]");
+        if (inspectBtn) {
+          openObjectInspector(Number(inspectBtn.dataset.inspect));
+        }
+      });
+
+      document.getElementById("closeModalBtn").addEventListener("click", closeObjectInspector);
+      document.getElementById("closeModalFooterBtn").addEventListener("click", closeObjectInspector);
+
+      document.getElementById("btnPrestar").addEventListener("click", () => {
+        const matId = document.getElementById("loanMaterialSelect").value;
+        const userId = document.getElementById("loanUserSelect").value;
+        prestarMaterial(matId, userId);
+      });
+      document.getElementById("btnDevolver").addEventListener("click", () => {
+        const matId = document.getElementById("loanMaterialSelect").value;
+        const userId = document.getElementById("loanUserSelect").value;
+        devolverMaterial(matId, userId);
+      });
+
+      document.getElementById("testFutureYearBtn").addEventListener("click", () => {
+        logConsole("Intentando libro_poo.set_anio_publicacion(2030)...", "info");
+        logConsole("¡Excepción capturada! ValueError: El año de publicación no puede ser un año futuro.", "error");
+        showToast("ValueError Capturado (@setter)", "El año de publicación (2030) no puede ser un año futuro.", "error");
+      });
+      document.getElementById("testZeroPagesBtn").addEventListener("click", () => {
+        logConsole("Intentando libro_novela.set_num_paginas(0)...", "info");
+        logConsole("¡Excepción capturada! ValueError: El número de páginas debe ser un valor positivo mayor a 0.", "error");
+        showToast("ValueError Capturado (@setter)", "El número de páginas debe ser mayor a 0.", "error");
+      });
+      document.getElementById("testShortIdBtn").addEventListener("click", () => {
+        logConsole("Intentando est_juan.set_identificacion('123')...", "info");
+        logConsole("¡Excepción capturada! ValueError: La identificación debe ser una cadena de 10 dígitos numéricos.", "error");
+        showToast("ValueError Capturado (@setter)", "La identificación '123' fue rechazada (requiere 10 dígitos).", "error");
+      });
+      document.getElementById("testReadOnlyLoanBtn").addEventListener("click", () => {
+        prestarMaterial(1003, "1234567890");
+      });
+
+      document.querySelectorAll(".form-tab-btn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const mode = btn.dataset.formtab;
+          document.querySelectorAll(".form-tab-btn").forEach((b) => {
+            b.className = "form-tab-btn flex-1 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition";
+          });
+          btn.className = "form-tab-btn flex-1 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-white transition";
+
+          if (mode === "material") {
+            document.getElementById("newMaterialForm").classList.remove("hidden");
+            document.getElementById("newUserForm").classList.add("hidden");
+          } else {
+            document.getElementById("newMaterialForm").classList.add("hidden");
+            document.getElementById("newUserForm").classList.remove("hidden");
+          }
+        });
+      });
+
+      document.getElementById("matTipo").addEventListener("change", (e) => {
+        const wrapper = document.getElementById("cursoFieldWrapper");
+        if (e.target.value === "Libro de Texto") {
+          wrapper.classList.remove("hidden");
+        } else {
+          wrapper.classList.add("hidden");
+        }
+      });
+
+      document.getElementById("newMaterialForm").addEventListener("submit", (e) => {
+        e.preventDefault();
+        const tipo = document.getElementById("matTipo").value;
+        const id = Number(document.getElementById("matId").value);
+        const titulo = document.getElementById("matTitulo").value.trim();
+        const autor = document.getElementById("matAutor").value.trim() || "Autor Institucional";
+        const editorial = document.getElementById("matEditorial").value.trim();
+        const anio = Number(document.getElementById("matAnio").value);
+        const paginas = Number(document.getElementById("matPaginas").value);
+        const isbn = document.getElementById("matIsbn").value.trim();
+        const curso = document.getElementById("matCurso").value.trim();
+
+        const currentYear = new Date().getFullYear();
+        if (anio > currentYear) {
+          logConsole(`ValueError en @año_publicacion.setter: El año ${anio} no puede ser futuro.`, "error");
+          showToast("Error de Validación (POO)", `El año ${anio} supera el año actual (${currentYear}).`, "error");
+          return;
+        }
+        if (paginas <= 0) {
+          logConsole(`ValueError en @numero_paginas.setter: ${paginas} no es un valor positivo.`, "error");
+          showToast("Error de Validación (POO)", "El número de páginas debe ser mayor a 0.", "error");
+          return;
+        }
+        if (state.materiales.some((m) => m.id === id)) {
+          logConsole(`Error BD: El ID ${id} ya existe en la tabla materiales.`, "error");
+          showToast("ID Duplicado", `Ya existe un material con el ID ${id}.`, "error");
+          return;
+        }
+
+        const nuevo = {
+          id,
+          titulo,
+          tipo,
+          disponible: true,
+          autor,
+          editorial,
+          anio,
+          paginas,
+          isbn,
+          curso: tipo === "Libro de Texto" ? curso : null,
+          prestable: tipo !== "Revista Científica"
+        };
+
+        state.materiales.push(nuevo);
+        document.getElementById("matId").value = id + 1;
+        document.getElementById("matTitulo").value = "";
+
+        logConsole(`SQL > INSERT INTO materiales VALUES (${id}, '${titulo}', '${tipo}', TRUE, '${autor}', '${editorial}', ${anio}, ${paginas}, '${isbn}');`, "sql");
+        logConsole(`Material '${titulo}' (ID: ${id}) registrado en la BD.`, "success");
+        showToast("Material Registrado", `'${titulo}' se agregó al catálogo y a MySQL.`, "success");
+        renderAll();
+      });
+
+      document.getElementById("newUserForm").addEventListener("submit", (e) => {
+        e.preventDefault();
+        const tipo = document.getElementById("userTipo").value;
+        const identificacion = document.getElementById("userId").value.trim();
+        const nombre = document.getElementById("userNombre").value.trim();
+        const extra = document.getElementById("userExtra").value.trim();
+
+        if (!/^\d{10}$/.test(identificacion)) {
+          logConsole(`ValueError en @identificacion.setter: '${identificacion}' no tiene 10 dígitos numéricos.`, "error");
+          showToast("Error de Validación (POO)", "La identificación debe tener exactamente 10 dígitos numéricos.", "error");
+          return;
+        }
+        if (state.usuarios.some((u) => u.identificacion === identificacion)) {
+          logConsole(`Error BD: El usuario con ID ${identificacion} ya está registrado.`, "error");
+          showToast("Usuario Duplicado", `Ya existe un usuario con ID ${identificacion}.`, "error");
+          return;
+        }
+
+        state.usuarios.push({
+          identificacion,
+          nombre,
+          tipo,
+          extra,
+          maxPrestamos: tipo === "estudiante" ? 5 : 10
+        });
+        document.getElementById("userNombre").value = "";
+
+        logConsole(`SQL > INSERT INTO usuarios VALUES ('${identificacion}', '${nombre}', '${tipo}', '${extra}');`, "sql");
+        logConsole(`Usuario '${nombre}' (ID: ${identificacion}) registrado en la BD.`, "success");
+        showToast("Usuario Registrado", `${nombre} (${tipo}) fue agregado con éxito.`, "success");
+        renderAll();
+      });
+
+      document.getElementById("clearConsoleBtn").addEventListener("click", () => {
+        document.getElementById("consoleOutput").innerHTML = "";
+      });
+
+      document.querySelectorAll(".uml-node").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          renderUMLInspector(btn.dataset.classinfo);
+        });
+      });
+
+      document.querySelectorAll(".code-tab-btn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          renderCodeViewer(btn.dataset.codefile);
+        });
+      });
+
+      document.getElementById("copyCodeBtn").addEventListener("click", () => {
+        const codeText = CODE_FILES[state.activeCodeFile] || "";
+        const copyFallback = () => {
+          const ta = document.createElement("textarea");
+          ta.value = codeText;
+          ta.style.position = "fixed";
+          ta.style.opacity = "0";
+          document.body.appendChild(ta);
+          ta.select();
+          try {
+            document.execCommand("copy");
+            showToast("Código copiado", `Se copió ${state.activeCodeFile} al portapapeles.`, "success");
+          } catch (err) {
+            showToast("Aviso", "Selecciona el texto manualmente para copiar.", "warning");
+          }
+          document.body.removeChild(ta);
+        };
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(codeText).then(() => {
+            showToast("Código copiado", `Se copió ${state.activeCodeFile} al portapapeles.`, "success");
+          }).catch(copyFallback);
+        } else {
+          copyFallback();
+        }
+      });
+    });
+  </script>
+</body>
+</html>

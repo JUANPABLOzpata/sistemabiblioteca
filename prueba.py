@@ -1,137 +1,120 @@
+# CASOS DE PRUEBA (Uso y Demostración del Sistema de Biblioteca)
 
-# CASOS DE PRUEBA (Uso y Demostración)
-
-# Importar todas las clases necesarias
-from materiales import libro, Libro_texto
+from materiales import Libro, LibroTexto, RevistaCientifica
 from personas import Estudiante, Profesor
 from biblioteca import SistemaBiblioteca
 
-def ejecutar_pruebas():    
-    bibloteca = SistemaBiblioteca()   #instancia del sistema(materales y usurarios)
-    print("=" * 50)
-    print(" SISTEMA DE BIBLIOTECA")
-    print("=" * 50)
-    
-   
-    # PRUEBA DE HERENCIA Y CLASES ABSTRACTAS
-  
-    print("\n" + "=" * 50)
-    print(" 1. DEMOSTRACIÓN DE HERENCIA")
-    print("=" * 50)
-    #Libro_texto (hereda de Libro, ObraLiteraria, Publicacion, Material).
-    
-    libro_poo = Libro_texto(
-        titulo="Programación Orientada a Objetos", 
-        codigo_id=1001, 
-        año_publicacion=2024, 
-        editorial="JUANPISFI", 
-        autor="J. Pérez", 
-        numero_paginas=450, 
-        isbn="978-0123456789", 
-        curso_asociado="Programación IV"
+
+def ejecutar_pruebas():
+    biblioteca = SistemaBiblioteca()
+    print("=" * 60)
+    print(" SISTEMA DE GESTIÓN DE BIBLIOTECA (POO + MySQL)")
+    print("=" * 60)
+
+    # 1. PRUEBA DE HERENCIA Y CLASES ABSTRACTAS
+    print("\n" + "=" * 60)
+    print(" 1. DEMOSTRACIÓN DE HERENCIA Y SOBRESCRITURA")
+    print("=" * 60)
+
+    libro_poo = LibroTexto(
+        titulo="Programación Orientada a Objetos",
+        codigo_id=1001,
+        año_publicacion=2024,
+        editorial="JUANPISFI",
+        autor="J. Pérez",
+        numero_paginas=450,
+        isbn="978-0123456789",
+        curso_asociado="Programación IV",
     )
 
-    #  Libro
-    
-    libro_novela = libro(
-        titulo="Cien años de soledad", 
-        codigo_id=1002, 
-        año_publicacion=1967, 
-        editorial="Sudamericana", 
-        autor="G. García Márquez", 
-        numero_paginas=400, 
-        isbn="978-0000000001"
+    libro_novela = Libro(
+        titulo="Cien años de soledad",
+        codigo_id=1002,
+        año_publicacion=1967,
+        editorial="Sudamericana",
+        autor="G. García Márquez",
+        numero_paginas=400,
+        isbn="978-0000000001",
     )
 
-    
-    
-    bibloteca.registrar_material_libro(libro_poo)
-    bibloteca.registrar_material_libro(libro_novela)
-   
-    print("\n Resultado de Herencia y Sobrescritura ")
-    # Demuestra reutilización y sobrescritura de mostrar_info()
+    revista_ia = RevistaCientifica(
+        titulo="IEEE Transactions on AI",
+        codigo_id=1003,
+        año_publicacion=2025,
+        editorial="IEEE",
+        issn="1234-5678",
+    )
+
+    biblioteca.registrar_material_libro(libro_poo)
+    biblioteca.registrar_material_libro(libro_novela)
+    biblioteca.registrar_material(revista_ia)
+
+    print("\n-> Resultado de Herencia y Sobrescritura de mostrar_info():")
     print(libro_poo.mostrar_info())
-    # Demuestra el método abstracto get_tipo_material()
-    print(f"Tipo: {libro_poo.get_tipo_material()}")
-    print(f"¿Es prestable? {libro_poo.es_prestamo_permitido()}") #valida si el material puede prestarse
+    print(libro_novela.mostrar_info())
+    print(revista_ia.mostrar_info())
+    print(f"Tipo: {libro_poo.get_tipo_material()} | ¿Es prestable?: {libro_poo.es_prestamo_permitido()}")
+    print(f"Tipo: {revista_ia.get_tipo_material()} | ¿Es prestable?: {revista_ia.es_prestamo_permitido()}")
 
+    # 2. PRUEBA DE POLIMORFISMO Y SOBRECARGA SIMULADA
+    print("\n" + "=" * 60)
+    print(" 2. DEMOSTRACIÓN DE POLIMORFISMO EN BÚSQUEDA")
+    print("=" * 60)
 
-   
-    #PRUEBA DE POLIMORFISMO Y SOBRECARGA
-  
-    print("\n" + "=" * 50)
-    print("2. DEMOSTRACIÓN DE POLIMORFISMO Y SOBRECARGA")
-    print("=" * 50)
-    
-    #Sobrecarga (simulada con métodos específicos):
-    print("-> Sobrecarga de 'registrar_material':")
-    
-    
-    # Polimorfismo en acción (buscar_material acepta ID o Título) en esta linea se hace mismo metodo distintos tipos
-    bibloteca.buscar_material(1001) # Búsqueda por ID
-    bibloteca.buscar_material("Objetos") # Búsqueda por Título 
+    biblioteca.buscar_material(1001)       # Búsqueda por ID (int)
+    biblioteca.buscar_material("Objetos")  # Búsqueda por Título (str)
 
-    
     # 3. PRUEBA DE ENCAPSULAMIENTO Y VALIDACIONES
-    
-    print("\n" + "=" * 50)
-    print("3. DEMOSTRACIÓN DE ENCAPSULAMIENTO Y VALIDACIONES")
-    print("=" * 50)
-    
-    # creacion de un Usuario estudiante
-    est_juan = Estudiante(nombre="Juan Pérez", identificacion="1234567890", carrera="Sistemas")
-    bibloteca.registrar_usuario(est_juan)
+    print("\n" + "=" * 60)
+    print(" 3. DEMOSTRACIÓN DE ENCAPSULAMIENTO Y VALIDACIONES")
+    print("=" * 60)
 
-    # VALIDACIÓN 1, Año de Publicación 
-    print("\n Validación 1: Intentar cambiar a año futuro (2030)...")
+    est_juan = Estudiante(nombre="Juan Pérez", identificacion="1234567890", carrera="Sistemas")
+    biblioteca.registrar_usuario(est_juan)
+
+    print("\n-> Validación 1: Intentar cambiar a año futuro (2030)...")
     try:
         libro_poo.set_anio_publicacion(2030)
     except ValueError as e:
         print(f"¡Excepción capturada!: {e}")
 
-    # VALIDACIÓN 2, Número de Páginas 
-    print("\n Validación 2: Intentar cambiar páginas a 0...")
+    print("\n-> Validación 2: Intentar cambiar páginas a 0...")
     try:
         libro_novela.set_num_paginas(0)
     except ValueError as e:
         print(f"¡Excepción capturada!: {e}")
 
-    # VALIDACIÓN 3, Identificación 
-    print("\n Validación 3: Intentar cambiar ID a un valor corto...")
+    print("\n-> Validación 3: Intentar cambiar ID a un valor corto ('123')...")
     try:
         est_juan.set_identificacion("123")
     except ValueError as e:
         print(f"¡Excepción capturada!: {e}")
 
-    
-    # 4. PRUEBA DE POLIMORFISMO CON CLASE BASE
-    
-    print("\n" + "=" * 50)
-    print("4. DEMOSTRACIÓN DE POLIMORFISMO EN PRESTAMOS")
-    print("=" * 50)
-    
-    #creamos profesor 
+    # 4. PRUEBA DE POLIMORFISMO EN PRÉSTAMOS Y DEVOLUCIONES
+    print("\n" + "=" * 60)
+    print(" 4. DEMOSTRACIÓN DE PRÉSTAMOS, REGLAS Y DEVOLUCIONES")
+    print("=" * 60)
+
     prof_ana = Profesor(nombre="Ana Gómez", identificacion="1122334455", departamento="Ingeniería")
-    bibloteca.registrar_usuario(prof_ana)
+    biblioteca.registrar_usuario(prof_ana)
 
-    # Préstamo 1: Libro (prestables) a Estudiante (límite 5)
-    print("\n-> Préstamo 1: Libro a Estudiante")
-    bibloteca.prestar_material(1002, "1234567890") 
+    print("\n-> Préstamo 1: Libro a Estudiante (Juan Pérez)")
+    biblioteca.prestar_material(1002, "1234567890")
 
-    # Préstamo 2: Libro_texto 
-    print("\n-> Préstamo 2: Libro de Texto a Profesor")
-    bibloteca.prestar_material(1001, "1122334455") 
-    
+    print("\n-> Préstamo 2: Libro de Texto a Profesor (Ana Gómez)")
+    biblioteca.prestar_material(1001, "1122334455")
 
-    # mostramos el estado usando atributos protegidos
-    print("\n--- Estado de Préstamos ---")
-    print(f"Juan Pérez (Estudiante) tiene prestados: {[m.get_titulo for m in est_juan.materiales_prestados]}")
-    print(f"Ana Gómez (Profesor) tiene prestados: {[m.get_titulo for m in prof_ana.materiales_prestados]}")
+    print("\n-> Intento de préstamo de material de solo consulta (Revista Científica):")
+    biblioteca.prestar_material(1003, "1234567890")
 
-    # Devolución
+    print("\n--- Estado Actual de Préstamos en Memoria ---")
+    print(f"Juan Pérez (Estudiante) tiene prestados: {[m.titulo for m in est_juan.materiales_prestados]}")
+    print(f"Ana Gómez (Profesor) tiene prestados: {[m.titulo for m in prof_ana.materiales_prestados]}")
+
     print("\n-> Devolución de material (Libro 1002 por Juan Pérez)")
-    bibloteca.devolver_material(1002, "1234567890")
+    biblioteca.devolver_material(1002, "1234567890")
+    print(f"Juan Pérez ahora tiene prestados: {[m.titulo for m in est_juan.materiales_prestados]}")
+
 
 if __name__ == "__main__":
-    ejecutar_pruebas()
     ejecutar_pruebas()
